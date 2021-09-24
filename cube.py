@@ -1,5 +1,6 @@
 import numpy as np
 import copy
+from random import randint, choice
 
 UP = 0
 LEFT = 1
@@ -10,12 +11,12 @@ BACK = 5
 
 class Cube:
     def __init__(self):
-        self.setup_dicts()
+        self.setupDicts()
         # Up, left, front, right, down, back
         self.cube = np.array([[i]*8 for i in self.cube_colors.keys()])
         #self.cube = np.array([[j for j in range(8)] for i in range(8)])
 
-    def setup_dicts(self):
+    def setupDicts(self):
         self.cube_colors = {0: 'red',
                             1: 'blue',
                             2: 'white',
@@ -49,9 +50,9 @@ class Cube:
 
     def moves(self, keys):
         for key in keys:
-            self.make_move(key)
+            self.makeMove(key)
     
-    def make_move(self, key):
+    def makeMove(self, key):
         order = self.move_order.get(key)
         idx_list = self.idx_list.get(key)
         tmp_cube = copy.deepcopy(self.cube)
@@ -61,7 +62,23 @@ class Cube:
         tmp_cube[order[1]][idx_list[0]] = self.cube[order[-1]][idx_list[-1]]
         self.cube = copy.deepcopy(tmp_cube)
 
-    def print_cube(self, cube):
+    def scramble(self):
+        moves = ''
+        for i in range(randint(20, 40)):
+            move = choice(list(self.move_order.keys()))
+            moves += move
+        self.moves(moves)
+        return moves
+
+    def isSolved(self):
+        for i,face in enumerate(self.cube):
+            result = np.all(face == i)
+            if not result:
+                return False
+        return True
+
+
+    def printCube(self, cube):
         m = np.empty((12,9),dtype=str)
         m.fill(' ')
         tmp_m = []
@@ -83,11 +100,10 @@ class Cube:
 
 def main():
     cube = Cube()
-    moves = 'DDRufbDDLDDLFFLuFFbrDDFFRRdFDDLLbFD'
-    cube.moves(moves)
+    moves = cube.scramble()
+    #cube.moves(moves)
     cube.moves(moves[::-1].swapcase())
-
-    cube.print_cube(cube.cube)
+    cube.printCube(cube.cube)
 
 if __name__ == "__main__":
     main()
