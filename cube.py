@@ -48,9 +48,12 @@ class Cube:
                             'u': [[0,1,2],[0,1,2],[0,1,2],[0,1,2]],
                             'd': [[4,5,6],[4,5,6],[4,5,6],[4,5,6]]}
 
-    def moves(self, keys):
-        for key in keys:
+    def moves(self, keys, detectSolved=False):
+        for i, key in enumerate(keys):
             self.makeMove(key)
+            if self.isSolved() and detectSolved:
+                return True, i
+        return False, -1
     
     def makeMove(self, key):
         order = self.move_order.get(key)
@@ -77,12 +80,11 @@ class Cube:
                 return False
         return True
 
-
-    def printCube(self, cube):
+    def printCube(self):
         m = np.empty((12,9),dtype=str)
         m.fill(' ')
         tmp_m = []
-        for face in cube:
+        for face in self.cube:
             tmp = np.array(([face[0],face[1],face[2]],[face[7],-1,face[3]],[face[6],face[5],face[4]]))
             tmp_tmp = np.empty_like(tmp,dtype=str)
             for i, row in enumerate(tmp):
@@ -95,15 +97,31 @@ class Cube:
         m[3:6,6:] = tmp_m[3]
         m[6:9,3:6] = tmp_m[4]
         m[9:,3:6] = tmp_m[5]
-        print(m)    
+        print(m)
+
+    def completeness(self):
+        complete = 0
+        for i, row in enumerate(self.cube):
+            complete += np.count_nonzero(row == i)
+        return complete
+
+    def setState(self, state):
+        self.cube = state
+
+    def getState(self):
+        return self.cube
 
 
 def main():
     cube = Cube()
-    moves = cube.scramble()
+    #moves = cube.scramble()
+    cube.moves('bBrURUbdUdRfFdbRBULRLbURBLuBfuuFlfdUuU',detectSolved=True)
+    print(cube.completeness())
+    #cube.printCube()
     #cube.moves(moves)
-    cube.moves(moves[::-1].swapcase())
-    cube.printCube(cube.cube)
+    #cube.moves(moves[::-1].swapcase())
+    #print(cube.completeness())
+    cube.printCube()
 
 if __name__ == "__main__":
     main()
