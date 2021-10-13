@@ -4,6 +4,8 @@ from cube import Cube
 from copy import deepcopy
 from tqdm import tqdm
 
+import utils
+
 # Paper: https://www-proquest-com.proxy3-bib.sdu.dk/docview/2150541241?accountid=14211&pq-origsite=summon
 class GA:
 	def __init__(self, pop_size=60, crossover_rate=0.1, iterations=100, chromosone_length=50, mutation_rate=1/50):
@@ -17,14 +19,22 @@ class GA:
 		self.init_population()
 		self.cube = Cube()
 		scramble = self.cube.scramble()
-		print(scramble)
 		self.child_cube = deepcopy(self.cube)
 		self.isSolved = []
 		self.numMoves = []
 
 	def init_population(self):
 		# Initialise population
-		self.population = [''.join([random.choice(self.possible_moves) for j in range(self.chromosone_length)]) for i in range(self.pop_size)]
+		self.population = []
+		for i in range(self.pop_size):
+			child = ''
+			for j in range(self.chromosone_length):
+				move = random.choice(self.possible_moves)
+				while(j > 0 and move == utils.swap_char(child[-1])):
+					move = random.choice(self.possible_moves)
+				child += move
+			self.population.append(child)
+		#self.population = [''.join([random.choice(self.possible_moves) for j in range(self.chromosone_length)]) for i in range(self.pop_size)]
 
 	def run(self):
 		# Run the GA
@@ -47,13 +57,13 @@ class GA:
 	def evolve(self, child_fitness):
 		# Evolve
 		# Selection (Tournament selection)
-		selected = self.selection(child_fitness)
+		selected = self.selection_roulette_wheel(child_fitness)
 		# Crossover
 		crossover = self.crossover(selected)
 		# Mutate
 		return self.mutate(crossover)
 
-	def selection(self, fitness, k=3):
+	def selection_tournament(self, fitness, k=3):
 		# Tournament selection
 		# first random selection
 		selected = []
@@ -65,6 +75,10 @@ class GA:
 					selection_ix = ix
 			selected.append(self.population[selection_ix])
 		return selected
+
+	def selection_roulette_wheel(self, fitness):
+		return random.choices(self.population, weights=fitness, k=self.pop_size)
+
 
 	def mutate(self, crossover):
 		# Mutate
