@@ -1,5 +1,6 @@
 import random
 import numpy as np
+from numpy import core
 from cube import Cube
 from copy import deepcopy
 from tqdm import tqdm
@@ -8,7 +9,7 @@ import utils
 
 # Paper: https://www-proquest-com.proxy3-bib.sdu.dk/docview/2150541241?accountid=14211&pq-origsite=summon
 class GA:
-	def __init__(self, pop_size=60, crossover_rate=0.1, iterations=100, chromosone_length=50, mutation_rate=1/50):
+	def __init__(self, pop_size=60, crossover_rate=0.1, iterations=100, chromosone_length=50, mutation_rate = 1/50):
 		# Init
 		self.pop_size = pop_size
 		self.mutation_rate = mutation_rate
@@ -18,7 +19,8 @@ class GA:
 		self.possible_moves = ['u', 'U', 'f', 'F', 'l', 'L', 'r', 'R', 'd', 'D', 'b', 'B']
 		self.init_population()
 		self.cube = Cube()
-		scramble = self.cube.scramble()
+		self.scramble = self.cube.scramble()
+		print("Scramble:",self.scramble)
 		self.child_cube = deepcopy(self.cube)
 		self.isSolved = []
 		self.numMoves = []
@@ -40,11 +42,12 @@ class GA:
 		# Run the GA
 		best_child = ''
 		max_fitness = 0
-		for it in tqdm(range(self.iterations)):
+		for it in tqdm(range(self.iterations), desc="Running GA agent for scramble {}".format(self.scramble)):
 			# Calculate fitness for population
 			child_fitness = self.fitness()
 			max_fitness = np.max(child_fitness)
 			best_child = self.population[child_fitness.index(max_fitness)]
+			tqdm.write("Max fitness " + str(max_fitness) + " - " + best_child)
 			for i, s in enumerate(self.isSolved):
 				if s:
 					return self.population[i], self.numMoves[i]
@@ -77,7 +80,16 @@ class GA:
 		return selected
 
 	def selection_roulette_wheel(self, fitness):
-		return random.choices(self.population, weights=fitness, k=self.pop_size)
+		#Picking the 20% best players
+		n = int(self.pop_size*0.2)
+		selection_idx = utils.max_n_elements_index(fitness, n)
+		selection = []
+		for select in selection_idx:
+			selection.append(self.population[select])
+		selection = np.asarray(selection)
+
+		# Rest of population is picked by roulette wheel and merged with the 20% best
+		return np.concatenate((selection, random.choices(self.population, weights=fitness, k=self.pop_size-n)))
 
 
 	def mutate(self, crossover):
@@ -88,7 +100,7 @@ class GA:
 				if np.random.rand() < self.mutation_rate:
 					c_list = list(c)
 					chr = c[i]
-					while(chr==c[i]):
+					while(chr==c[i] or (chr == utils.swap_char(c[i-1]) and chr == c[i] and i > 0)):
 						chr = random.choice(self.possible_moves)
 					c_list[i] = chr
 					c = ''.join(c_list)
@@ -113,16 +125,18 @@ class GA:
 	def fitness(self):
 		# Calculate fitness
 		child_fitness = []
+		self.isSolved = []
+		self.numMoves = []
 		for child in self.population:
 			self.child_cube.setState(self.cube.getState())
 			solved, num_moves = self.child_cube.moves(child, detectSolved=True)
 			self.isSolved.append(solved)
 			self.numMoves.append(num_moves)
-			child_fitness.append(self.child_cube.completeness())
+			child_fitness.append(self.child_cube.completeness_down())
 		return child_fitness
 
 if __name__ == "__main__":
-	ga = GA(pop_size=100, iterations=9000)
+	ga = GA(pop_size=100, chromosone_length=30, crossover_rate=0.5, mutation_rate=1/20, iterations=9000)
 	solution, num_moves = ga.run()
 	print(solution)
 	print(num_moves)

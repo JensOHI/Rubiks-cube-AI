@@ -47,11 +47,15 @@ class Cube:
                             'r': [[2,3,4],[6,7,0],[2,3,4],[2,3,4]],
                             'u': [[0,1,2],[0,1,2],[0,1,2],[0,1,2]],
                             'd': [[4,5,6],[4,5,6],[4,5,6],[4,5,6]]}
+        #Orange is down
+        self.cross_indexs = [[4, 1, 2, 5], [4, 3, 3, 5], [4, 5, 5, 5], [4, 7, 1, 5]]
+        self.down_indexs = [[4, 0], [4, 2], [4, 4], [4, 6]]
 
     def moves(self, keys, detectSolved=False):
         for i, key in enumerate(keys):
             self.makeMove(key)
-            if self.isSolved() and detectSolved:
+            #if self.isSolved() and detectSolved:
+            if self.completeness_down() >= 8 + 4 and detectSolved:
                 return True, i
         return False, -1
     
@@ -103,6 +107,22 @@ class Cube:
         complete = 0
         for i, row in enumerate(self.cube):
             complete += np.count_nonzero(row == i)
+        return complete
+    
+    def completeness_cross(self):
+        complete = 0
+        for idx in self.cross_indexs:
+            if self.cube[idx[0]][idx[1]] == idx[0]:
+                complete += 1
+                if self.cube[idx[2]][idx[3]] == idx[2]:
+                    complete += 1
+        return complete
+
+    def completeness_down(self):
+        complete = self.completeness_cross()
+        for idx in self.down_indexs:
+            if self.cube[idx[0]][idx[1]] == idx[0]:
+                complete += 1
         return complete
 
     def setState(self, state):
