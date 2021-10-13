@@ -44,6 +44,12 @@ class GA:
 		max_fitness = 0
 		for it in tqdm(range(self.iterations), desc="Running GA agent for scramble {}".format(self.scramble)):
 			# Calculate fitness for population
+			if it == 500:
+				self.chromosone_length += 10
+				for i, pop in enumerate(self.population):
+					for n in range(10):
+						pop += random.choice(self.possible_moves)
+					self.population[i] = pop
 			child_fitness = self.fitness()
 			max_fitness = np.max(child_fitness)
 			best_child = self.population[child_fitness.index(max_fitness)]
@@ -61,6 +67,7 @@ class GA:
 		# Evolve
 		# Selection (Tournament selection)
 		selected = self.selection_roulette_wheel(child_fitness)
+		np.random.shuffle(selected)
 		# Crossover
 		crossover = self.crossover(selected)
 		# Mutate
@@ -100,7 +107,7 @@ class GA:
 				if np.random.rand() < self.mutation_rate:
 					c_list = list(c)
 					chr = c[i]
-					while(chr==c[i] or (chr == utils.swap_char(c[i-1]) and chr == c[i] and i > 0)):
+					while(chr==c[i] or ((i > 0 and i < len(c)-1) and (chr == utils.swap_char(c[i-1]) or chr == utils.swap_char(c[i+1]) or chr == c[i]))):
 						chr = random.choice(self.possible_moves)
 					c_list[i] = chr
 					c = ''.join(c_list)
@@ -136,7 +143,7 @@ class GA:
 		return child_fitness
 
 if __name__ == "__main__":
-	ga = GA(pop_size=100, chromosone_length=30, crossover_rate=0.5, mutation_rate=1/20, iterations=9000)
+	ga = GA(pop_size=100, chromosone_length=30, crossover_rate=0.5, mutation_rate=1/50, iterations=9000)
 	solution, num_moves = ga.run()
 	print(solution)
 	print(num_moves)

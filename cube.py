@@ -9,6 +9,10 @@ RIGHT = 3
 DOWN = 4
 BACK = 5
 
+FITNESS_CROSS_DOWN = 1
+FITNESS_CROSS_EDGE = 2
+FITNESS_DOWN_CORNER = 1
+
 class Cube:
     def __init__(self):
         self.setupDicts()
@@ -49,13 +53,13 @@ class Cube:
                             'd': [[4,5,6],[4,5,6],[4,5,6],[4,5,6]]}
         #Orange is down
         self.cross_indexs = [[4, 1, 2, 5], [4, 3, 3, 5], [4, 5, 5, 5], [4, 7, 1, 5]]
-        self.down_indexs = [[4, 0], [4, 2], [4, 4], [4, 6]]
+        self.down_indexs = [[4, 0, 1, 4, 2, 6], [4, 2, 2, 4, 3, 6], [4, 4, 3, 4, 5, 6], [4, 6, 5, 4, 1, 6]]
 
     def moves(self, keys, detectSolved=False):
         for i, key in enumerate(keys):
             self.makeMove(key)
             #if self.isSolved() and detectSolved:
-            if self.completeness_down() >= 8 + 4 and detectSolved:
+            if self.completeness_down() >= 4*(FITNESS_CROSS_DOWN + FITNESS_CROSS_EDGE + FITNESS_DOWN_CORNER) and detectSolved:
                 return True, i
         return False, -1
     
@@ -113,16 +117,16 @@ class Cube:
         complete = 0
         for idx in self.cross_indexs:
             if self.cube[idx[0]][idx[1]] == idx[0]:
-                complete += 1
+                complete += FITNESS_CROSS_DOWN
                 if self.cube[idx[2]][idx[3]] == idx[2]:
-                    complete += 1
+                    complete += FITNESS_CROSS_EDGE
         return complete
 
     def completeness_down(self):
         complete = self.completeness_cross()
         for idx in self.down_indexs:
-            if self.cube[idx[0]][idx[1]] == idx[0]:
-                complete += 1
+            if self.cube[idx[0]][idx[1]] == idx[0] and self.cube[idx[2]][idx[3]] == idx[2] and self.cube[idx[4]][idx[5]] == idx[4]:
+                complete += FITNESS_DOWN_CORNER
         return complete
 
     def setState(self, state):
