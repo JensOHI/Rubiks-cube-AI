@@ -14,6 +14,7 @@ FITNESS_CROSS_DOWN = 1
 FITNESS_CROSS_EDGE = 1
 FITNESS_DOWN_CORNER = 1
 FITNESS_CENTER_EDGE = 1
+FITNESS_F2L = 2
 
 class Cube:
     def __init__(self):
@@ -56,13 +57,14 @@ class Cube:
                             'd': [[4,5,6],[4,5,6],[4,5,6],[4,5,6]]}
         self.completeness_dict = {
                             utils.SubSolution.CROSS: 8,
-                            utils.SubSolution.CORNER_DOWN: 12,
-                            utils.SubSolution.CENTER_EDGE: 16
+                            #utils.SubSolution.CORNER_DOWN: 12,
+                            #utils.SubSolution.CENTER_EDGE: 16,
+                            utils.SubSolution.F2L: 16
         }
         #Orange is down
         self.cross_indexs = [[4, 1, 2, 5], [4, 3, 3, 5], [4, 5, 5, 5], [4, 7, 1, 5]]
         self.down_indexs = [[4, 0, 1, 4, 2, 6], [4, 2, 2, 4, 3, 6], [4, 4, 3, 4, 5, 6], [4, 6, 5, 4, 1, 6]]
-        self.center_edge_indexs = [[5, 3, 1, 7], [1, 3, 2, 7], [2, 3, 3, 7], [3, 3, 5, 7]]
+        self.center_edge_indexs = [[1, 3, 2, 7], [2, 3, 3, 7], [3, 3, 5, 7], [5, 3, 1, 7]]
 
 
     def moves(self, keys, detectSolved=False):
@@ -120,11 +122,13 @@ class Cube:
     def completeness(self):
         if self.current_sub_problem == utils.SubSolution.CROSS:
             return self.completeness_cross()
-        elif self.current_sub_problem == utils.SubSolution.CORNER_DOWN:
+        elif self.current_sub_problem == utils.SubSolution.F2L:
+            return self.completeness_f2l()
+        return 0
+        '''elif self.current_sub_problem == utils.SubSolution.CORNER_DOWN:
             return self.completeness_corner_down()
         elif self.current_sub_problem == utils.SubSolution.CENTER_EDGE:
-            return self.completeness_center_edge()
-        return 0
+            return self.completeness_center_edge()'''
         
     
     def completeness_cross(self):
@@ -150,6 +154,12 @@ class Cube:
                 complete += FITNESS_CENTER_EDGE
         return complete
 
+    def completeness_f2l(self):
+        complete = self.completeness_cross()
+        for idx_cd, idx_ce in zip(self.down_indexs, self.center_edge_indexs):
+            if self.cube[idx_cd[0]][idx_cd[1]] == idx_cd[0] and self.cube[idx_cd[2]][idx_cd[3]] == idx_cd[2] and self.cube[idx_cd[4]][idx_cd[5]] == idx_cd[4] and self.cube[idx_ce[0]][idx_ce[1]] == idx_ce[0] and self.cube[idx_ce[2]][idx_ce[3]] == idx_ce[2]:
+                complete += FITNESS_F2L
+        return complete
 
     def setState(self, state):
         self.cube = state

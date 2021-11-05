@@ -3,8 +3,9 @@ from enum import Enum
 
 class SubSolution(Enum):
     CROSS = 1
-    CORNER_DOWN = 2
-    CENTER_EDGE = 3
+    #CORNER_DOWN = 2
+    #CENTER_EDGE = 3
+    F2L = 2
 
     def next(self):
         return SubSolution(self.value + 1)

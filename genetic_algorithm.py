@@ -6,7 +6,7 @@ from copy import deepcopy
 from tqdm import tqdm
 
 import utils
-
+#https://ieeexplore-ieee-org.proxy1-bib.sdu.dk/abstract/document/9376564
 # Paper: https://www-proquest-com.proxy3-bib.sdu.dk/docview/2150541241?accountid=14211&pq-origsite=summon
 class GA:
 	def __init__(self, pop_size=60, crossover_rate=0.1, iterations=100, chromosone_length=50, mutation_rate = 1/50):
@@ -70,7 +70,7 @@ class GA:
 					self.current_solution += self.population[i][0:self.numMoves[i]+1]
 					self.isSolved = []
 					self.numMoves = []
-					if self.current_sub_problem == utils.SubSolution.CENTER_EDGE:
+					if self.current_sub_problem == utils.SubSolution.F2L:
 						return self.current_solution
 					self.current_sub_problem = self.current_sub_problem.next()
 					self.cube.current_sub_problem = self.current_sub_problem
