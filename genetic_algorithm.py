@@ -16,6 +16,7 @@ class GA:
 		self.crossover_rate = crossover_rate
 		self.iterations = iterations
 		self.chromosone_length = chromosone_length
+		self.chromosone_length_start_value = self.chromosone_length
 		self.possible_moves = ['u', 'U', 'f', 'F', 'l', 'L', 'r', 'R', 'd', 'D', 'b', 'B']
 		self.init_population()
 		self.cube = Cube()
@@ -24,6 +25,9 @@ class GA:
 		self.child_cube = deepcopy(self.cube)
 		self.isSolved = []
 		self.numMoves = []
+		self.expand_chromosone = 1
+		self.current_solution = ""
+		self.current_sub_problem = utils.SubSolution.CROSS
 
 	def init_population(self):
 		# Initialise population
@@ -44,23 +48,39 @@ class GA:
 		max_fitness = 0
 		for it in tqdm(range(self.iterations), desc="Running GA agent for scramble {}".format(self.scramble)):
 			# Calculate fitness for population
-			if it == 500:
-				self.chromosone_length += 10
+			if it % 20 == 0:
+				self.chromosone_length += self.expand_chromosone
 				for i, pop in enumerate(self.population):
-					for n in range(10):
+					for n in range(self.expand_chromosone):
 						pop += random.choice(self.possible_moves)
 					self.population[i] = pop
 			child_fitness = self.fitness()
 			max_fitness = np.max(child_fitness)
 			best_child = self.population[child_fitness.index(max_fitness)]
-			tqdm.write("Max fitness " + str(max_fitness) + " - " + best_child)
+			tqdm.write("Max fitness " + str(max_fitness) + " - " + self.current_solution + " + " +  best_child)
+			
+			# Dynamic mutation rate, depending on fitness
+			#self.mutation_rate = 2.0/max_fitness
+			
+			new_sub_problem = False
 			for i, s in enumerate(self.isSolved):
-				if s:
-					return self.population[i], self.numMoves[i]
-			# Evolve
-			mutate = self.evolve(child_fitness)
-			# Save new population
-			self.population = mutate
+				if s and not new_sub_problem:
+					tqdm.write(self.population[i][0:self.numMoves[i]+1] + " - " + str(i) + " - " + str(self.numMoves[i]+1))
+					_, _ = self.cube.moves(self.population[i][0:self.numMoves[i]+1])
+					self.current_solution += self.population[i][0:self.numMoves[i]+1]
+					self.isSolved = []
+					self.numMoves = []
+					if self.current_sub_problem == utils.SubSolution.CENTER_EDGE:
+						return self.current_solution
+					self.current_sub_problem = self.current_sub_problem.next()
+					self.cube.current_sub_problem = self.current_sub_problem
+					self.child_cube.current_sub_problem = self.current_sub_problem
+					self.chromosone_length = self.chromosone_length_start_value
+					self.init_population()
+					new_sub_problem = True
+			if not new_sub_problem:
+				# Evolve and save new population
+				self.population = self.evolve(child_fitness)
 		return best_child, -1
 	
 	def evolve(self, child_fitness):
@@ -68,10 +88,22 @@ class GA:
 		# Selection (Tournament selection)
 		selected = self.selection_roulette_wheel(child_fitness)
 		np.random.shuffle(selected)
+		self.population = selected
+		selected_fitness = self.fitness()
+
 		# Crossover
 		crossover = self.crossover(selected)
 		# Mutate
-		return self.mutate(crossover)
+		mutate = self.mutate(crossover)
+
+		self.population = mutate
+		mutate_child_fitness = self.fitness()
+
+		for i, (prev_child, new_child) in enumerate(zip(selected_fitness, mutate_child_fitness)):
+			if new_child < prev_child:
+				mutate[i] = selected[i]
+
+		return mutate
 
 	def selection_tournament(self, fitness, k=3):
 		# Tournament selection
@@ -139,11 +171,9 @@ class GA:
 			solved, num_moves = self.child_cube.moves(child, detectSolved=True)
 			self.isSolved.append(solved)
 			self.numMoves.append(num_moves)
-			child_fitness.append(self.child_cube.completeness_down())
+			child_fitness.append(self.child_cube.completeness())
 		return child_fitness
 
 if __name__ == "__main__":
-	ga = GA(pop_size=100, chromosone_length=30, crossover_rate=0.5, mutation_rate=1/50, iterations=9000)
-	solution, num_moves = ga.run()
-	print(solution)
-	print(num_moves)
+	ga = GA(pop_size=100, chromosone_length=5, crossover_rate=0.5, mutation_rate=1/3, iterations=9000)
+	print(ga.run())

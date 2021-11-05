@@ -1,6 +1,7 @@
 import numpy as np
 import copy
 from random import randint, choice
+import utils
 
 UP = 0
 LEFT = 1
@@ -10,8 +11,9 @@ DOWN = 4
 BACK = 5
 
 FITNESS_CROSS_DOWN = 1
-FITNESS_CROSS_EDGE = 2
+FITNESS_CROSS_EDGE = 1
 FITNESS_DOWN_CORNER = 1
+FITNESS_CENTER_EDGE = 1
 
 class Cube:
     def __init__(self):
@@ -19,6 +21,7 @@ class Cube:
         # Up, left, front, right, down, back
         self.cube = np.array([[i]*8 for i in self.cube_colors.keys()])
         #self.cube = np.array([[j for j in range(8)] for i in range(8)])
+        self.current_sub_problem = utils.SubSolution.CROSS
 
     def setupDicts(self):
         self.cube_colors = {0: 'red',
@@ -51,15 +54,22 @@ class Cube:
                             'r': [[2,3,4],[6,7,0],[2,3,4],[2,3,4]],
                             'u': [[0,1,2],[0,1,2],[0,1,2],[0,1,2]],
                             'd': [[4,5,6],[4,5,6],[4,5,6],[4,5,6]]}
+        self.completeness_dict = {
+                            utils.SubSolution.CROSS: 8,
+                            utils.SubSolution.CORNER_DOWN: 12,
+                            utils.SubSolution.CENTER_EDGE: 16
+        }
         #Orange is down
         self.cross_indexs = [[4, 1, 2, 5], [4, 3, 3, 5], [4, 5, 5, 5], [4, 7, 1, 5]]
         self.down_indexs = [[4, 0, 1, 4, 2, 6], [4, 2, 2, 4, 3, 6], [4, 4, 3, 4, 5, 6], [4, 6, 5, 4, 1, 6]]
+        self.center_edge_indexs = [[5, 3, 1, 7], [1, 3, 2, 7], [2, 3, 3, 7], [3, 3, 5, 7]]
+
 
     def moves(self, keys, detectSolved=False):
         for i, key in enumerate(keys):
             self.makeMove(key)
             #if self.isSolved() and detectSolved:
-            if self.completeness_down() >= 4*(FITNESS_CROSS_DOWN + FITNESS_CROSS_EDGE + FITNESS_DOWN_CORNER) and detectSolved:
+            if self.completeness() >= self.completeness_dict.get(self.current_sub_problem) and detectSolved:
                 return True, i
         return False, -1
     
@@ -108,10 +118,14 @@ class Cube:
         print(m)
 
     def completeness(self):
-        complete = 0
-        for i, row in enumerate(self.cube):
-            complete += np.count_nonzero(row == i)
-        return complete
+        if self.current_sub_problem == utils.SubSolution.CROSS:
+            return self.completeness_cross()
+        elif self.current_sub_problem == utils.SubSolution.CORNER_DOWN:
+            return self.completeness_corner_down()
+        elif self.current_sub_problem == utils.SubSolution.CENTER_EDGE:
+            return self.completeness_center_edge()
+        return 0
+        
     
     def completeness_cross(self):
         complete = 0
@@ -122,12 +136,20 @@ class Cube:
                     complete += FITNESS_CROSS_EDGE
         return complete
 
-    def completeness_down(self):
+    def completeness_corner_down(self):
         complete = self.completeness_cross()
         for idx in self.down_indexs:
             if self.cube[idx[0]][idx[1]] == idx[0] and self.cube[idx[2]][idx[3]] == idx[2] and self.cube[idx[4]][idx[5]] == idx[4]:
                 complete += FITNESS_DOWN_CORNER
         return complete
+    
+    def completeness_center_edge(self):
+        complete = self.completeness_corner_down()
+        for idx in self.center_edge_indexs:
+            if self.cube[idx[0]][idx[1]] == idx[0] and self.cube[idx[2]][idx[3]] == idx[2]:
+                complete += FITNESS_CENTER_EDGE
+        return complete
+
 
     def setState(self, state):
         self.cube = state

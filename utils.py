@@ -1,4 +1,13 @@
 import numpy as np
+from enum import Enum
+
+class SubSolution(Enum):
+    CROSS = 1
+    CORNER_DOWN = 2
+    CENTER_EDGE = 3
+
+    def next(self):
+        return SubSolution(self.value + 1)
 
 def swap_char(char):
     if char.isupper():
@@ -13,3 +22,5 @@ def max_n_elements_index(lst, n):
         max_lst.append(idx + i)
         lst_copy = np.delete(lst_copy, idx)
     return max_lst
+
+
