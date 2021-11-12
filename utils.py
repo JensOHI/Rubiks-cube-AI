@@ -1,19 +1,30 @@
 import numpy as np
 from enum import Enum
 
-class SubSolution(Enum):
-    CROSS = 1
-    #CORNER_DOWN = 2
-    #CENTER_EDGE = 3
-    F2L = 2
+# https://robertovaccari.com/blog/2020_07_07_genetic_rubik/
+permutations = [
+    "flbruRuBLFRUrU",
+    "FRBLUlUbrfluLu",
+    "UUBUUbRRFrfUUfUUFr",
+    "UURUUrFFLflUUlUULf",
+    "uBBDDlFFDDBBru",
+    "UBBDDRFFDDBBLU",
+    "drDRRuRBBLulBBURR",
+    "DLdLLUlBBrURBBuLL",
+    "rUlUURuLrUlUURuLu",
+    "LuRUUlUrLuRUUlUrU",
+    "fUBuFUbu",
+    "FubUfuBU",
+    "lUULrFFR",
+    "rUURlBBL",
+    "MMUMMUUMMUMM"
+]
 
-    def next(self):
-        return SubSolution(self.value + 1)
-
-def swap_char(char):
-    if char.isupper():
-        return char.lower()
-    return char.upper()
+def convert_index_to_moves(idxs):
+    moves = ""
+    for idx in idxs:
+        moves += permutations[idx]
+    return moves
 
 def max_n_elements_index(lst, n):
     lst_copy = np.copy(lst)

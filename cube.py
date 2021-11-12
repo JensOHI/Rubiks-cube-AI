@@ -2,7 +2,7 @@ import numpy as np
 import copy
 from random import randint, choice
 import utils
-
+import time
 UP = 'w'
 LEFT = 'o'
 FRONT = 'g'
@@ -31,25 +31,25 @@ class Cube:
         }
 
         self.key_lookup = {
-            'F': [FRONT, CLOCKWISE, self.swap_z, ((DOWN, 0, False), (LEFT, 2, True), (UP, 2, False), (RIGHT, 0, True))],
-            'f': [FRONT, COUNTERCLOCKWISE, self.swap_z, ((DOWN, 0, True), (RIGHT, 0, False), (UP, 2, True), (LEFT, 2, False))],
-            'B': [BACK, CLOCKWISE, self.swap_z, ((DOWN, 2, True), (RIGHT, 2, False), (UP, 0, True), (LEFT, 0, False))],
-            'b': [BACK, COUNTERCLOCKWISE, self.swap_z, ((DOWN, 2, False), (LEFT, 0, True), (UP, 0, False), (RIGHT, 2, True))],
-            'L': [LEFT, CLOCKWISE, self.swap_y, ((DOWN, 0, True), (BACK, 2, True), (UP, 0, False), (FRONT, 0, False))],
-            'l': [LEFT, COUNTERCLOCKWISE, self.swap_y, ((DOWN, 0, False), (FRONT, 0, False), (UP, 0, True), (BACK, 2, True))],
-            'R': [RIGHT, CLOCKWISE, self.swap_y, ((DOWN, 2, False), (FRONT, 2, False), (UP, 2, True), (BACK, 0, True))],
-            'r': [RIGHT, COUNTERCLOCKWISE, self.swap_y, ((DOWN, 2, True), (BACK, 0, True), (UP, 2, False), (FRONT, 2, False))],
-            'U': [UP, CLOCKWISE, self.swap_x, ((FRONT, 0),(LEFT, 0),(BACK, 0),(RIGHT, 0))],
-            'u': [UP, COUNTERCLOCKWISE, self.swap_x, ((FRONT, 0),(RIGHT, 0),(BACK, 0),(LEFT, 0))],
-            'D': [DOWN, CLOCKWISE, self.swap_x, ((FRONT, 2),(RIGHT, 2),(BACK, 2),(LEFT, 2))],
-            'd': [DOWN, COUNTERCLOCKWISE, self.swap_x, ((FRONT, 2),(LEFT, 2),(BACK, 2),(RIGHT, 2))],
+            'F': [FRONT, CLOCKWISE, self.__swap_z, ((DOWN, 0, False), (LEFT, 2, True), (UP, 2, False), (RIGHT, 0, True))],
+            'f': [FRONT, COUNTERCLOCKWISE, self.__swap_z, ((DOWN, 0, True), (RIGHT, 0, False), (UP, 2, True), (LEFT, 2, False))],
+            'B': [BACK, CLOCKWISE, self.__swap_z, ((DOWN, 2, True), (RIGHT, 2, False), (UP, 0, True), (LEFT, 0, False))],
+            'b': [BACK, COUNTERCLOCKWISE, self.__swap_z, ((DOWN, 2, False), (LEFT, 0, True), (UP, 0, False), (RIGHT, 2, True))],
+            'L': [LEFT, CLOCKWISE, self.__swap_y, ((DOWN, 0, True), (BACK, 2, True), (UP, 0, False), (FRONT, 0, False))],
+            'l': [LEFT, COUNTERCLOCKWISE, self.__swap_y, ((DOWN, 0, False), (FRONT, 0, False), (UP, 0, True), (BACK, 2, True))],
+            'R': [RIGHT, CLOCKWISE, self.__swap_y, ((DOWN, 2, False), (FRONT, 2, False), (UP, 2, True), (BACK, 0, True))],
+            'r': [RIGHT, COUNTERCLOCKWISE, self.__swap_y, ((DOWN, 2, True), (BACK, 0, True), (UP, 2, False), (FRONT, 2, False))],
+            'U': [UP, CLOCKWISE, self.__swap_x, ((FRONT, 0),(LEFT, 0),(BACK, 0),(RIGHT, 0))],
+            'u': [UP, COUNTERCLOCKWISE, self.__swap_x, ((FRONT, 0),(RIGHT, 0),(BACK, 0),(LEFT, 0))],
+            'D': [DOWN, CLOCKWISE, self.__swap_x, ((FRONT, 2),(RIGHT, 2),(BACK, 2),(LEFT, 2))],
+            'd': [DOWN, COUNTERCLOCKWISE, self.__swap_x, ((FRONT, 2),(LEFT, 2),(BACK, 2),(RIGHT, 2))],
 
-            'E': [self.swap_x, ((FRONT, 1), (RIGHT, 1), (BACK, 1), (LEFT, 1))],
-            'e': [self.swap_x, ((FRONT, 1), (LEFT, 1), (BACK, 1), (RIGHT, 1))],
-            'M': [self.swap_y, ((DOWN, 1, True), (BACK, 1, True), (UP, 1, False), (FRONT, 1, False))],
-            'm': [self.swap_y, ((DOWN, 1, False), (FRONT, 1, False), (UP, 1, True), (BACK, 1, True))],
-            'S': [self.swap_z, ((DOWN, 1, False), (LEFT, 1, True), (UP, 1, False), (RIGHT, 1, True))],
-            's': [self.swap_z, ((DOWN, 1, True), (RIGHT, 1, False), (UP, 1, True), (LEFT, 1, False))],
+            'E': [self.__swap_x, ((FRONT, 1), (RIGHT, 1), (BACK, 1), (LEFT, 1))],
+            'e': [self.__swap_x, ((FRONT, 1), (LEFT, 1), (BACK, 1), (RIGHT, 1))],
+            'M': [self.__swap_y, ((DOWN, 1, True), (BACK, 1, True), (UP, 1, False), (FRONT, 1, False))],
+            'm': [self.__swap_y, ((DOWN, 1, False), (FRONT, 1, False), (UP, 1, True), (BACK, 1, True))],
+            'S': [self.__swap_z, ((DOWN, 1, False), (LEFT, 1, True), (UP, 1, False), (RIGHT, 1, True))],
+            's': [self.__swap_z, ((DOWN, 1, True), (RIGHT, 1, False), (UP, 1, True), (LEFT, 1, False))],
 
             'X': 'lmR',
             'x': 'LMr',
@@ -59,7 +59,18 @@ class Cube:
             'z': 'fsB'
         }
 
-    def moves(self, moves):
+
+    def moves_idx(self, moves, detectSolved=False):
+        for idx, move in enumerate(moves):
+            self.__moves(utils.permutations[move])
+            if self.completeness() >= 54 and detectSolved:
+                return True, idx
+        return False, -1
+
+            
+
+
+    def __moves(self, moves):
         for move in moves:
             self.move(move)
 
@@ -68,7 +79,7 @@ class Cube:
         if key in ['E', 'e', 'M', 'm', 'S', 's']:
             lst[0](lst[1])
         elif key in ['X', 'x', 'Y', 'y', 'Z', 'z']:
-            self.moves(lst)
+            self.__moves(lst)
         else:
             self.cube[lst[0]] = np.rot90(self.cube[lst[0]], axes=lst[1])
             lst[2](lst[3])
@@ -78,7 +89,7 @@ class Cube:
         dest[1] = origin[1]
         dest[2] = origin[2] if not flip_origin else origin[0]
 
-    def swap_x(self, lst):
+    def __swap_x(self, lst):
         t1 = lst[0]
         t2 = lst[1]
         t3 = lst[2]
@@ -92,7 +103,7 @@ class Cube:
         self.__copy_faces(self.cube[t1[0]][t1[1]], temp)
         
 
-    def swap_y(self, lst):
+    def __swap_y(self, lst):
         t1 = lst[0]
         t2 = lst[1]
         t3 = lst[2]
@@ -105,7 +116,7 @@ class Cube:
         self.__copy_faces(self.cube[t2[0]][:, t2[1]], self.cube[t1[0]][:, t1[1]], t1[2])
         self.__copy_faces(self.cube[t1[0]][:, t1[1]], temp)
 
-    def swap_z(self, lst):
+    def __swap_z(self, lst):
         t1 = lst[0]
         t2 = lst[1]
         t3 = lst[2]
@@ -118,12 +129,25 @@ class Cube:
         self.__copy_faces(self.cube[t2[0]][:, t2[1]], self.cube[t1[0]][t1[1]], t1[2])
         self.__copy_faces(self.cube[t1[0]][t1[1]], temp)
 
+    def completeness(self):
+        complete = 0
+        for face in self.cube.values():
+            complete += np.count_nonzero((face==face[1][1])) 
+        return complete
+
+    def setState(self, state):
+        self.cube = state
+
+
+    def getState(self):
+        return self.cube
+
     def scramble(self):
         moves = ''
         for i in range(randint(20, 40)):
             move = choice(list(self.key_lookup.keys()))
             moves += move
-        self.moves(moves)
+        self.__moves(moves)
         return moves
 
     def print_cube(self):
@@ -137,8 +161,8 @@ class Cube:
         print(m)
 
 if __name__ == "__main__":
+    moves = []
     cube = Cube()
-    scramble = cube.scramble()
 
 '''
 
