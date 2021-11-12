@@ -24,4 +24,18 @@ def max_n_elements_index(lst, n):
         lst_copy = np.delete(lst_copy, idx)
     return max_lst
 
+def convert_moves_to_prime_convention(moves):
+    converted_moves = ""
+    for move in moves:
+        if move in ['X', 'x', 'Y', 'y', 'Z', 'z']:
+            if move.islower():
+                converted_moves += move + "'"
+            else:
+                converted_moves += move.lower()
+        elif move.islower():
+            converted_moves += move.upper()+"'"
+        else:
+            converted_moves += move
+    return converted_moves
+
 

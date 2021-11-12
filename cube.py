@@ -3,12 +3,12 @@ import copy
 from random import randint, choice
 import utils
 
-UP = 0
-LEFT = 1
-FRONT = 2
-RIGHT = 3
-DOWN = 4
-BACK = 5
+UP = 'w'
+LEFT = 'o'
+FRONT = 'g'
+RIGHT = 'r'
+DOWN = 'y'
+BACK = 'b'
 
 FITNESS_CROSS_DOWN = 1
 FITNESS_CROSS_EDGE = 1
@@ -16,8 +16,132 @@ FITNESS_DOWN_CORNER = 1
 FITNESS_CENTER_EDGE = 1
 FITNESS_F2L = 2
 
+CLOCKWISE = (1, 0)
+COUNTERCLOCKWISE = (0, 1)
+
 class Cube:
     def __init__(self):
+        self.cube = {
+            UP: np.full((3,3), UP),
+            LEFT: np.full((3,3), LEFT),
+            FRONT: np.full((3,3), FRONT),
+            RIGHT: np.full((3,3), RIGHT),
+            DOWN: np.full((3,3), DOWN),
+            BACK: np.full((3,3), BACK)
+        }
+
+        self.key_lookup = {
+            'F': [FRONT, CLOCKWISE, self.swap_z, ((DOWN, 0, False), (LEFT, 2, True), (UP, 2, False), (RIGHT, 0, True))],
+            'f': [FRONT, COUNTERCLOCKWISE, self.swap_z, ((DOWN, 0, True), (RIGHT, 0, False), (UP, 2, True), (LEFT, 2, False))],
+            'B': [BACK, CLOCKWISE, self.swap_z, ((DOWN, 2, True), (RIGHT, 2, False), (UP, 0, True), (LEFT, 0, False))],
+            'b': [BACK, COUNTERCLOCKWISE, self.swap_z, ((DOWN, 2, False), (LEFT, 0, True), (UP, 0, False), (RIGHT, 2, True))],
+            'L': [LEFT, CLOCKWISE, self.swap_y, ((DOWN, 0, True), (BACK, 2, True), (UP, 0, False), (FRONT, 0, False))],
+            'l': [LEFT, COUNTERCLOCKWISE, self.swap_y, ((DOWN, 0, False), (FRONT, 0, False), (UP, 0, True), (BACK, 2, True))],
+            'R': [RIGHT, CLOCKWISE, self.swap_y, ((DOWN, 2, False), (FRONT, 2, False), (UP, 2, True), (BACK, 0, True))],
+            'r': [RIGHT, COUNTERCLOCKWISE, self.swap_y, ((DOWN, 2, True), (BACK, 0, True), (UP, 2, False), (FRONT, 2, False))],
+            'U': [UP, CLOCKWISE, self.swap_x, ((FRONT, 0),(LEFT, 0),(BACK, 0),(RIGHT, 0))],
+            'u': [UP, COUNTERCLOCKWISE, self.swap_x, ((FRONT, 0),(RIGHT, 0),(BACK, 0),(LEFT, 0))],
+            'D': [DOWN, CLOCKWISE, self.swap_x, ((FRONT, 2),(RIGHT, 2),(BACK, 2),(LEFT, 2))],
+            'd': [DOWN, COUNTERCLOCKWISE, self.swap_x, ((FRONT, 2),(LEFT, 2),(BACK, 2),(RIGHT, 2))],
+
+            'E': [self.swap_x, ((FRONT, 1), (RIGHT, 1), (BACK, 1), (LEFT, 1))],
+            'e': [self.swap_x, ((FRONT, 1), (LEFT, 1), (BACK, 1), (RIGHT, 1))],
+            'M': [self.swap_y, ((DOWN, 1, True), (BACK, 1, True), (UP, 1, False), (FRONT, 1, False))],
+            'm': [self.swap_y, ((DOWN, 1, False), (FRONT, 1, False), (UP, 1, True), (BACK, 1, True))],
+            'S': [self.swap_z, ((DOWN, 1, False), (LEFT, 1, True), (UP, 1, False), (RIGHT, 1, True))],
+            's': [self.swap_z, ((DOWN, 1, True), (RIGHT, 1, False), (UP, 1, True), (LEFT, 1, False))],
+
+            'X': 'lmR',
+            'x': 'LMr',
+            'Y': 'Ued',
+            'y': 'uED',
+            'Z': 'FSb',
+            'z': 'fsB'
+        }
+
+    def moves(self, moves):
+        for move in moves:
+            self.move(move)
+
+    def move(self, key):
+        lst = self.key_lookup.get(key)
+        if key in ['E', 'e', 'M', 'm', 'S', 's']:
+            lst[0](lst[1])
+        elif key in ['X', 'x', 'Y', 'y', 'Z', 'z']:
+            self.moves(lst)
+        else:
+            self.cube[lst[0]] = np.rot90(self.cube[lst[0]], axes=lst[1])
+            lst[2](lst[3])
+
+    def __copy_faces(self, dest, origin, flip_origin=False):
+        dest[0] = origin[0] if not flip_origin else origin[2]
+        dest[1] = origin[1]
+        dest[2] = origin[2] if not flip_origin else origin[0]
+
+    def swap_x(self, lst):
+        t1 = lst[0]
+        t2 = lst[1]
+        t3 = lst[2]
+        t4 = lst[3]
+
+        temp = np.array(["","",""])
+        self.__copy_faces(temp, self.cube[t4[0]][t4[1]])
+        self.__copy_faces(self.cube[t4[0]][t4[1]], self.cube[t3[0]][t3[1]])
+        self.__copy_faces(self.cube[t3[0]][t3[1]], self.cube[t2[0]][t2[1]])
+        self.__copy_faces(self.cube[t2[0]][t2[1]], self.cube[t1[0]][t1[1]])
+        self.__copy_faces(self.cube[t1[0]][t1[1]], temp)
+        
+
+    def swap_y(self, lst):
+        t1 = lst[0]
+        t2 = lst[1]
+        t3 = lst[2]
+        t4 = lst[3]
+        
+        temp = np.array(["","",""])
+        self.__copy_faces(temp, self.cube[t4[0]][:, t4[1]], t4[2])
+        self.__copy_faces(self.cube[t4[0]][:, t4[1]], self.cube[t3[0]][:, t3[1]], t3[2])
+        self.__copy_faces(self.cube[t3[0]][:, t3[1]], self.cube[t2[0]][:, t2[1]], t2[2])
+        self.__copy_faces(self.cube[t2[0]][:, t2[1]], self.cube[t1[0]][:, t1[1]], t1[2])
+        self.__copy_faces(self.cube[t1[0]][:, t1[1]], temp)
+
+    def swap_z(self, lst):
+        t1 = lst[0]
+        t2 = lst[1]
+        t3 = lst[2]
+        t4 = lst[3]
+
+        temp = np.array(["","",""])
+        self.__copy_faces(temp, self.cube[t4[0]][:, t4[1]], t4[2])
+        self.__copy_faces(self.cube[t4[0]][:, t4[1]], self.cube[t3[0]][t3[1]], t3[2])
+        self.__copy_faces(self.cube[t3[0]][t3[1]], self.cube[t2[0]][:, t2[1]], t2[2])
+        self.__copy_faces(self.cube[t2[0]][:, t2[1]], self.cube[t1[0]][t1[1]], t1[2])
+        self.__copy_faces(self.cube[t1[0]][t1[1]], temp)
+
+    def scramble(self):
+        moves = ''
+        for i in range(randint(20, 40)):
+            move = choice(list(self.key_lookup.keys()))
+            moves += move
+        self.moves(moves)
+        return moves
+
+    def print_cube(self):
+        m = np.full((12,9), ' ')
+        m[0:3,3:6] = self.cube[UP]
+        m[3:6,0:3] = self.cube[LEFT]
+        m[3:6,3:6] = self.cube[FRONT]
+        m[3:6,6:] = self.cube[RIGHT]
+        m[6:9,3:6] = self.cube[DOWN]
+        m[9:,3:6] = self.cube[BACK]
+        print(m)
+
+if __name__ == "__main__":
+    cube = Cube()
+    scramble = cube.scramble()
+
+'''
+
         self.setupDicts()
         # Up, left, front, right, down, back
         self.cube = np.array([[i]*8 for i in self.cube_colors.keys()])
@@ -125,10 +249,10 @@ class Cube:
         elif self.current_sub_problem == utils.SubSolution.F2L:
             return self.completeness_f2l()
         return 0
-        '''elif self.current_sub_problem == utils.SubSolution.CORNER_DOWN:
+        elif self.current_sub_problem == utils.SubSolution.CORNER_DOWN:
             return self.completeness_corner_down()
         elif self.current_sub_problem == utils.SubSolution.CENTER_EDGE:
-            return self.completeness_center_edge()'''
+            return self.completeness_center_edge()
         
     
     def completeness_cross(self):
@@ -181,3 +305,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+'''
