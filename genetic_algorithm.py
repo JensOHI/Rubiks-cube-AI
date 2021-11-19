@@ -42,33 +42,17 @@ class GA:
 		best_child = []
 		max_fitness = 0
 
-		fitness_time = 0
-		fitness_time_start = 0
-		fitness_time_end = 0
-		selection_time = 0
-		selection_time_start = 0
-		selection_time_end = 0
-		total_time = 0
-		total_time_start = 0
-		total_time_end = 0
+
 		for it in tqdm(range(self.iterations), desc="Running GA agent for scramble {}".format(self.scramble)):
-			total_time = total_time_end-total_time_start
-			fitness_time = fitness_time_end-fitness_time_start
-			selection_time = selection_time_end-selection_time_start
-			tqdm.write("Total time: " + str(total_time) + " - Fitness time: "+str(fitness_time) +" - Selection time: "+str(selection_time))
-			total_time_start = time.time()
 			for i in range(len(self.population)):
 				self.population[i] = list(self.population[i])
 			for child in self.population:
 				child.extend([np.random.choice(self.possible_moves)])
 			# Calculate fitness for population
-			fitness_time_start = time.time()
 			child_fitness = self.fitness()
-			fitness_time_end = time.time()
 			max_fitness = np.max(child_fitness)
 			best_child = self.population[child_fitness.index(max_fitness)]
-			if it % 20 == 0:
-				tqdm.write("Max fitness " + str(max_fitness) + " - " +  utils.convert_index_to_moves(best_child))
+			
 			
 			# Dynamic mutation rate, depending on fitness
 			#self.mutation_rate = 2.0/max_fitness
@@ -77,10 +61,7 @@ class GA:
 				if s:
 					return utils.convert_index_to_moves(self.population[i][0:self.numMoves[i]+1])
 			# Evolve and save new population
-			selection_time_start = time.time()
 			self.population = self.evolve(child_fitness)
-			selection_time_end = time.time()
-			total_time_end = time.time()
 		return utils.convert_index_to_moves(best_child)
 	
 	def evolve(self, child_fitness):
@@ -88,6 +69,7 @@ class GA:
 		# Selection (Tournament selection)
 		selected = self.selection_roulette_wheel(child_fitness)
 		np.random.shuffle(selected)
+		'''
 		self.population = selected
 		selected_fitness = self.fitness()
 
@@ -102,8 +84,8 @@ class GA:
 		for i, (prev_child, new_child) in enumerate(zip(selected_fitness, mutate_child_fitness)):
 			if new_child < prev_child:
 				mutate[i] = selected[i]
-		
-		return mutate
+		'''
+		return selected
 
 	def selection_tournament(self, fitness, k=3):
 		# Tournament selection
