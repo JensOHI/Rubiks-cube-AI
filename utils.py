@@ -2,9 +2,9 @@ import numpy as np
 from enum import Enum
 
 # https://robertovaccari.com/blog/2020_07_07_genetic_rubik/
-rotations = ["X", "x", "Y", "y"]
+rotations = ["X", "x", "Y", "y", "YY", "XX"]
 
-orientations = ["Z", "z"]
+orientations = ["Z", "z", "ZZ"]
 
 permutations = [
     "flbruRuBLFRUrU",

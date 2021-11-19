@@ -78,12 +78,13 @@ class Cube:
         lst = self.key_lookup.get(key)
         if key in ['E', 'e', 'M', 'm', 'S', 's']:
             lst[0](lst[1])
+            self.applied_moves += key
         elif key in ['X', 'x', 'Y', 'y', 'Z', 'z']:
             self.moves(lst)
         else:
             self.cube[lst[0]] = np.rot90(self.cube[lst[0]], axes=lst[1])
             lst[2](lst[3])
-        self.applied_moves += key
+            self.applied_moves += key
 
     def __copy_faces(self, dest, origin, flip_origin=False):
         dest[0] = origin[0] if not flip_origin else origin[2]

@@ -32,44 +32,45 @@ class GA:
             for generation in tqdm(range(0, self.iterations), desc="Solving for scramble: "+utils.convert_moves_to_prime_convention(self.scramble)):
                 fitness = [child.completeness() for child in self.children]
                 self.children, fitness =  zip(*reversed(sorted(zip(self.children, fitness), key=lambda pair: pair[1])))
-                
+                self.children = list(self.children)
+                fitness = list(fitness)
+
                 if generation % 20 == 0:
                     tqdm.write("Generation: "+str(generation))
                     tqdm.write("Best solution so far: "+utils.convert_moves_to_prime_convention(self.children[0].applied_moves))
                     tqdm.write("Fitness: "+str(fitness[0]))
 
-                for i, child in enumerate(self.children):
+
+                for i in range(0,len(self.children)):
                     if fitness[i] >= 54:
-                        print("Solved")
-                        print(self.scramble)
-                        print(utils.convert_moves_to_prime_convention(child.applied_moves))
+                        print("Solved: ", utils.convert_moves_to_prime_convention(self.children[i].applied_moves))
                         return True
                     
 
                     if i > self.elitetism:
-                        child = deepcopy(self.children[np.random.randint(0,self.elitetism)])
+                        self.children[i] = deepcopy(self.children[np.random.randint(0,self.elitetism)])
                         evolution_type = np.random.randint(0,6)
          
 
                         if evolution_type == 0:
-                            child.moves(self.__rnd_permutation())
+                            self.children[i].moves(self.__rnd_permutation())
                         elif evolution_type == 1:
-                            child.moves(self.__rnd_permutation())
-                            child.moves(self.__rnd_permutation())
+                            self.children[i].moves(self.__rnd_permutation())
+                            self.children[i].moves(self.__rnd_permutation())
                         elif evolution_type == 2:
-                            child.moves(self.__rnd_full_rotation())
-                            child.moves(self.__rnd_permutation())
+                            self.children[i].moves(self.__rnd_full_rotation())
+                            self.children[i].moves(self.__rnd_permutation())
                         elif evolution_type == 3:
-                            child.moves(self.__rnd_orientation())
-                            child.moves(self.__rnd_permutation())
+                            self.children[i].moves(self.__rnd_orientation())
+                            self.children[i].moves(self.__rnd_permutation())
                         elif evolution_type == 4:
-                            child.moves(self.__rnd_full_rotation())
-                            child.moves(self.__rnd_orientation())
-                            child.moves(self.__rnd_permutation())
+                            self.children[i].moves(self.__rnd_full_rotation())
+                            self.children[i].moves(self.__rnd_orientation())
+                            self.children[i].moves(self.__rnd_permutation())
                         elif evolution_type == 5:
-                            child.moves(self.__rnd_orientation())
-                            child.moves(self.__rnd_full_rotation())
-                            child.moves(self.__rnd_permutation())
+                            self.children[i].moves(self.__rnd_orientation())
+                            self.children[i].moves(self.__rnd_full_rotation())
+                            self.children[i].moves(self.__rnd_permutation())
 
     def __rnd_full_rotation(self):
         return np.random.choice(utils.rotations)
