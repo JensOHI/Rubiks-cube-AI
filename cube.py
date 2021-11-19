@@ -61,14 +61,7 @@ class Cube:
         self.applied_moves = ""
 
     def moves_idx(self, moves, detectSolved=False):
-        for idx, move in enumerate(moves):
-            self.moves(utils.permutations[move])
-            if self.completeness() >= 54 and detectSolved:
-                return True, idx
-        return False, -1
-
-            
-
+        self.moves(utils.convert_index_to_moves(moves))
 
     def moves(self, moves):
         for move in moves:
@@ -104,7 +97,6 @@ class Cube:
         self.__copy_faces(self.cube[t2[0]][t2[1]], self.cube[t1[0]][t1[1]])
         self.__copy_faces(self.cube[t1[0]][t1[1]], temp)
         
-
     def __swap_y(self, lst):
         t1 = lst[0]
         t2 = lst[1]

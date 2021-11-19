@@ -24,10 +24,23 @@ permutations = [
     "MMUMMUUMMUMM"
 ]
 
+permutations_range = [0, len(permutations)]
+orientations_range = [len(permutations), len(permutations) + len(orientations)]
+rotations_range = [len(permutations) + len(orientations), len(permutations) + len(orientations) + len(rotations)]
+
+
 def convert_index_to_moves(idxs):
     moves = ""
     for idx in idxs:
-        moves += permutations[idx]
+        if idx < permutations_range[1]:
+            moves += permutations[idx]
+        elif idx >= orientations_range[0] and idx < orientations_range[1]:
+            moves += orientations[idx - orientations_range[0]]
+        elif idx >= rotations_range[0] and idx < rotations_range[1]:
+            moves += rotations[idx - rotations_range[0]]
+        else:
+            raise ValueError("Convert index to moves out of range.")
+
     return moves
 
 def max_n_elements_index(lst, n):
@@ -53,4 +66,15 @@ def convert_moves_to_prime_convention(moves):
             converted_moves += move
     return converted_moves
 
+def get_random_move():
+    # Return either permutaion, rotation or orientation
+    prob = np.random.randint(0,100)
+    if prob < 60:
+        return np.random.randint(permutations_range[0],permutations_range[1])
+    elif prob >= 60 and prob < 80:
+        return np.random.randint(orientations_range[0], orientations_range[1])
+    else:
+        return np.random.randint(rotations_range[0], rotations_range[1])
 
+def get_shortest_solution(sol1, sol2):
+    return sol1 if len(convert_index_to_moves(sol1)) < len(convert_index_to_moves(sol2)) else sol2
