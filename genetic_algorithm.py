@@ -17,6 +17,7 @@ class GA:
 		self.crossover_rate = crossover_rate
 		self.iterations = iterations
 		self.chromosone_length = chromosone_length
+		self.num_extra_moves = 3
 		self.init_population()
 		self.cube = Cube()
 		self.scramble = self.cube.scramble()
@@ -60,25 +61,17 @@ class GA:
 		#print("Fitness: ", self.fitness(selected))
 		# Add random move
 		extra_move = deepcopy(selected)
-		extra_move = [child + [utils.get_random_move()] for child in extra_move]
+		extra_move = [child + [utils.get_random_move() for i in range(self.num_extra_moves)] for child in extra_move]
 		best_children = self.evaluate(selected, extra_move)
-		
-		'''
-		self.population = selected
-		selected_fitness = self.fitness()
 
 		# Crossover
-		crossover = self.crossover(selected)
+		crossover = self.crossover(best_children)
+		best_children = self.evaluate(best_children, crossover)
+		
 		# Mutate
-		mutate = self.mutate(crossover)
+		mutate = self.mutate(best_children)
+		best_children = self.evaluate(best_children, mutate)
 
-		self.population = mutate
-		mutate_child_fitness = self.fitness()
-
-		for i, (prev_child, new_child) in enumerate(zip(selected_fitness, mutate_child_fitness)):
-			if new_child < prev_child:
-				mutate[i] = selected[i]
-		'''
 		return best_children
 
 	def selection_tournament(self, fitness, k=3):
@@ -117,10 +110,14 @@ class GA:
 		for i in range(0, self.pop_size, 2):
 			if np.random.rand() < self.crossover_rate:
 				# select crossover point that is not on the end of the string
-				pt = np.random.randint(1, self.chromosone_length-2)
+				#pt = np.random.randint(1, self.chromosone_length-2)
+				pt1 = int(len(selected[i])/2)
+				pt2 = int(len(selected[i+1])/2)
 				# perform crossover
-				crossover.append(np.hstack((selected[i][:pt], selected[i+1][pt:])))
-				crossover.append(np.hstack((selected[i+1][:pt], selected[i][pt:])))
+				#crossover.append(np.hstack((selected[i][:pt], selected[i+1][pt:])))
+				#crossover.append(np.hstack((selected[i+1][:pt], selected[i][pt:])))
+				crossover.append(selected[i][:pt1] + selected[i+1][pt2:])
+				crossover.append(selected[i+1][:pt2] + selected[i][pt1:])
 			else:
 				crossover.append(selected[i])
 				crossover.append(selected[i+1])
@@ -132,7 +129,7 @@ class GA:
 		for child in crossover:
 			for c in child:
 				if np.random.rand() < self.mutation_rate:
-					c = random.choice(self.possible_moves)
+					c = utils.get_random_move()
 			mutate.append(child)
 		return mutate
 
@@ -164,5 +161,5 @@ class GA:
 
 
 if __name__ == "__main__":
-	ga = GA(pop_size=100, chromosone_length=1, crossover_rate=0.5, mutation_rate=1/3, iterations=9000)
+	ga = GA(pop_size=500, chromosone_length=1, crossover_rate=0.5, mutation_rate=0.5, iterations=500)
 	print(ga.run())
