@@ -58,11 +58,11 @@ class Cube:
             'Z': 'FSb',
             'z': 'fsB'
         }
-
+        self.applied_moves = ""
 
     def moves_idx(self, moves, detectSolved=False):
         for idx, move in enumerate(moves):
-            self.__moves(utils.permutations[move])
+            self.moves(utils.permutations[move])
             if self.completeness() >= 54 and detectSolved:
                 return True, idx
         return False, -1
@@ -70,7 +70,7 @@ class Cube:
             
 
 
-    def __moves(self, moves):
+    def moves(self, moves):
         for move in moves:
             self.move(move)
 
@@ -79,10 +79,11 @@ class Cube:
         if key in ['E', 'e', 'M', 'm', 'S', 's']:
             lst[0](lst[1])
         elif key in ['X', 'x', 'Y', 'y', 'Z', 'z']:
-            self.__moves(lst)
+            self.moves(lst)
         else:
             self.cube[lst[0]] = np.rot90(self.cube[lst[0]], axes=lst[1])
             lst[2](lst[3])
+        self.applied_moves += key
 
     def __copy_faces(self, dest, origin, flip_origin=False):
         dest[0] = origin[0] if not flip_origin else origin[2]
@@ -147,7 +148,7 @@ class Cube:
         for i in range(randint(20, 40)):
             move = choice(list(self.key_lookup.keys()))
             moves += move
-        self.__moves(moves)
+        self.moves(moves)
         return moves
 
     def print_cube(self):
