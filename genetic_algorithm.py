@@ -5,12 +5,13 @@ from cube import Cube
 from copy import deepcopy
 from tqdm import tqdm
 import time
+import os
 
 import utils
 #https://ieeexplore-ieee-org.proxy1-bib.sdu.dk/abstract/document/9376564
 # Paper: https://www-proquest-com.proxy3-bib.sdu.dk/docview/2150541241?accountid=14211&pq-origsite=summon
 class GA:
-	def __init__(self, pop_size=60, crossover_rate=0.1, iterations=100, chromosone_length=1, mutation_rate = 1/50):
+	def __init__(self, pop_size=60, crossover_rate=0.1, iterations=100, chromosone_length=1, mutation_rate = 1/50, scramble = Cube().scramble(), filename = None):
 		# Init
 		self.pop_size = pop_size
 		self.mutation_rate = mutation_rate
@@ -19,9 +20,11 @@ class GA:
 		self.chromosone_length = chromosone_length
 		self.num_extra_moves = 3
 		self.init_population()
+		self.scramble = scramble
 		self.cube = Cube()
-		self.scramble = self.cube.scramble()
+		self.cube.moves(scramble)
 		self.child_cube = deepcopy(self.cube)
+		self.filename = filename
 
 	def init_population(self):
 		# Initialise population
@@ -37,19 +40,22 @@ class GA:
 		# Run the GA
 		best_child = []
 		max_fitness = 0
+		if self.filename:
+			utils.write_csv_file(self.filename, ["max fitness", "best child"])
 		for it in tqdm(range(self.iterations), desc="Running GA agent for scramble {}".format(utils.convert_moves_to_prime_convention(self.scramble))):
 			# Calculate fitness for population
 			child_fitness = self.fitness(self.population)
-			max_fitness = np.max(child_fitness)
-			best_child = self.population[child_fitness.index(max_fitness)]
+			max_fitness, best_child = utils.find_best_child(self.population, child_fitness)
+			if self.filename:
+				utils.write_csv_file(self.filename, [str(max_fitness), utils.convert_index_to_moves(best_child)])
 			if it % 1 == 0:
 				tqdm.write("Max fitness: " + str(max_fitness))
 				tqdm.write("Best child: " + utils.convert_moves_to_prime_convention(utils.convert_index_to_moves(best_child)))
 			if max_fitness >= 54:
-				return utils.convert_index_to_moves(best_child)
+				return utils.convert_index_to_moves(best_child), it
 			# Evolve and save new population
 			self.population = self.evolve(child_fitness)
-		return utils.convert_index_to_moves(best_child)
+		return utils.convert_index_to_moves(best_child), self.iterations
 	
 	def evolve(self, child_fitness):
 		# Evolve
@@ -161,5 +167,32 @@ class GA:
 
 
 if __name__ == "__main__":
-	ga = GA(pop_size=500, chromosone_length=1, crossover_rate=0.5, mutation_rate=0.5, iterations=500)
-	print(ga.run())
+	# Loading the 10 scrambles.
+	'''
+	for i in range(10):
+		utils.write_csv_file("scrambles.txt", [Cube().scramble()])	
+	'''	
+	scrambles = []
+	with open("scrambles.txt", 'r') as file:
+		for line in file.readlines():
+			scrambles.append(line[:-1])
+	
+	TEST_FOLDER = "tests"
+	if not os.path.exists(TEST_FOLDER):
+		os.mkdir(TEST_FOLDER)
+	crossover_rates = [0.5]
+	mutation_rates = [0.5]
+	for crossover_rate in crossover_rates:
+		for mutation_rate in mutation_rates:
+			cr_mr_path =os.path.join(TEST_FOLDER, "cr-"+str(crossover_rate)+"_mr-"+str(mutation_rate))
+			if not os.path.exists(cr_mr_path):
+				os.mkdir(cr_mr_path)
+			for i, scramble in enumerate(scrambles):
+				for test_scramble in range(30):
+					filename = os.path.join(cr_mr_path,"test_"+str(i)+"_"+str(test_scramble)+".csv")
+					ga = GA(pop_size=100, chromosone_length=1, crossover_rate=crossover_rate, mutation_rate=mutation_rate, iterations=300, scramble=scramble, filename=filename)
+					start_time = time.time()
+					best_solution, num_of_generation = ga.run()
+					completion_time = time.time() - start_time
+					utils.write_csv_file(filename, ["Completion time", "Solution", "Generations", "Scramble"])
+					utils.write_csv_file(filename, [str(completion_time), best_solution, str(num_of_generation), scramble])

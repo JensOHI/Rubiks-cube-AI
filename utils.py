@@ -78,3 +78,17 @@ def get_random_move():
 
 def get_shortest_solution(sol1, sol2):
     return sol1 if len(convert_index_to_moves(sol1)) < len(convert_index_to_moves(sol2)) else sol2
+
+def find_best_child(population, fitness):
+    max_fitness = np.max(fitness)
+    if fitness.count(max_fitness) > 1:
+        idxs = np.where(fitness == max_fitness)[0]
+        childs = np.asarray(population)[idxs]
+        true_childs = [convert_index_to_moves(child) for child in childs]
+        childs, true_childs = zip(*sorted(zip(childs, true_childs), key=lambda x: len(x[1])))
+        return max_fitness, childs[0] 
+    return max_fitness, population[fitness.index(max_fitness)]
+
+def write_csv_file(filename, data):
+    with open(filename, 'a') as file:
+        file.writelines(','.join(data)+"\n")
