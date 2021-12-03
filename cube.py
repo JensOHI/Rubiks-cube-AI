@@ -57,9 +57,9 @@ class Cube:
                             'd': [[4,5,6],[4,5,6],[4,5,6],[4,5,6]]}
         self.completeness_dict = {
                             utils.SubSolution.CROSS: 8,
-                            #utils.SubSolution.CORNER_DOWN: 12,
+                            utils.SubSolution.CORNER_DOWN: 12,
                             #utils.SubSolution.CENTER_EDGE: 16,
-                            utils.SubSolution.F2L: 16
+                            #utils.SubSolution.F2L: 16
         }
         #Orange is down
         self.cross_indexs = [[4, 1, 2, 5], [4, 3, 3, 5], [4, 5, 5, 5], [4, 7, 1, 5]]
@@ -122,13 +122,13 @@ class Cube:
     def completeness(self):
         if self.current_sub_problem == utils.SubSolution.CROSS:
             return self.completeness_cross()
-        elif self.current_sub_problem == utils.SubSolution.F2L:
-            return self.completeness_f2l()
-        return 0
-        '''elif self.current_sub_problem == utils.SubSolution.CORNER_DOWN:
+        elif self.current_sub_problem == utils.SubSolution.CORNER_DOWN:
             return self.completeness_corner_down()
-        elif self.current_sub_problem == utils.SubSolution.CENTER_EDGE:
-            return self.completeness_center_edge()'''
+        return 0
+        '''elif self.current_sub_problem == utils.SubSolution.CENTER_EDGE:
+            return self.completeness_center_edge()
+        elif self.current_sub_problem == utils.SubSolution.F2L:
+            return self.completeness_f2l()'''
         
     
     def completeness_cross(self):
