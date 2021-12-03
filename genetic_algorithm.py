@@ -6,6 +6,7 @@ from copy import deepcopy
 from tqdm import tqdm
 import time
 import os
+from multiprocessing import Pool
 
 import utils
 #https://ieeexplore-ieee-org.proxy1-bib.sdu.dk/abstract/document/9376564
@@ -18,13 +19,14 @@ class GA:
 		self.crossover_rate = crossover_rate
 		self.iterations = iterations
 		self.chromosone_length = chromosone_length
-		self.num_extra_moves = 3
+		self.num_extra_moves = 2
 		self.init_population()
 		self.scramble = scramble
 		self.cube = Cube()
 		self.cube.moves(scramble)
 		self.child_cube = deepcopy(self.cube)
 		self.filename = filename
+		self.max_fitness_list = []
 
 	def init_population(self):
 		# Initialise population
@@ -40,17 +42,33 @@ class GA:
 		# Run the GA
 		best_child = []
 		max_fitness = 0
+		self.max_fitness_list.append(max_fitness)
 		if self.filename:
 			utils.write_csv_file(self.filename, ["max fitness", "best child"])
-		for it in tqdm(range(self.iterations), desc="Running GA agent for scramble {}".format(utils.convert_moves_to_prime_convention(self.scramble))):
+		#for it in tqdm(range(self.iterations), desc="Running GA agent for scramble {}".format(utils.convert_moves_to_prime_convention(self.scramble))):
+		for it in range(self.iterations):
 			# Calculate fitness for population
 			child_fitness = self.fitness(self.population)
 			max_fitness, best_child = utils.find_best_child(self.population, child_fitness)
+			if max_fitness > self.max_fitness_list[-1]:
+				self.max_fitness_list = [max_fitness]
+				self.num_extra_moves = 2
+			else:
+				self.max_fitness_list.append(max_fitness)
+			if len(self.max_fitness_list) >= 20 and len(self.max_fitness_list) < 30:
+				self.num_extra_moves = 3
+			elif len(self.max_fitness_list) >= 30 and len(self.max_fitness_list) < 40:
+				self.num_extra_moves = 4
+			elif len(self.max_fitness_list) >= 40 and len(self.max_fitness_list) < 50:
+				self.num_extra_moves = 5
+			elif len(self.max_fitness_list) >= 50:
+				self.num_extra_moves = 6
 			if self.filename:
 				utils.write_csv_file(self.filename, [str(max_fitness), utils.convert_index_to_moves(best_child)])
-			if it % 1 == 0:
-				tqdm.write("Max fitness: " + str(max_fitness))
-				tqdm.write("Best child: " + utils.convert_moves_to_prime_convention(utils.convert_index_to_moves(best_child)))
+			#if it % 1 == 0:
+			#	tqdm.write('Num extra moves added: ' + str(self.num_extra_moves))
+			#	tqdm.write("Max fitness: " + str(max_fitness))
+			#	tqdm.write("Best child: " + utils.convert_moves_to_prime_convention(utils.convert_index_to_moves(best_child)))
 			if max_fitness >= 54:
 				return utils.convert_index_to_moves(best_child), it
 			# Evolve and save new population
@@ -164,7 +182,21 @@ class GA:
 				new_pop.append(utils.get_shortest_solution(pop1[i], pop2[i]))
 		return new_pop
 
-
+def run_multiprocessing(args):
+	# args = [crossover_rate, mutation_rate, cr_mr_path, i, scramble, test_scramble]
+	crossover_rate = args[0]
+	mutation_rate = args[1]
+	cr_mr_path = args[2]
+	i = args[3]
+	scramble = args[4]
+	test_scramble = args[5]
+	filename = os.path.join(cr_mr_path,"test_"+str(i)+"_"+str(test_scramble)+".csv")
+	ga = GA(pop_size=100, chromosone_length=1, crossover_rate=crossover_rate, mutation_rate=mutation_rate, iterations=10, scramble=scramble, filename=filename)
+	start_time = time.time()
+	best_solution, num_of_generation = ga.run()
+	completion_time = time.time() - start_time
+	utils.write_csv_file(filename, ["Completion time", "Solution", "Generations", "Scramble"])
+	utils.write_csv_file(filename, [str(completion_time), best_solution, str(num_of_generation), scramble])
 
 if __name__ == "__main__":
 	# Loading the 10 scrambles.
@@ -188,11 +220,13 @@ if __name__ == "__main__":
 			if not os.path.exists(cr_mr_path):
 				os.mkdir(cr_mr_path)
 			for i, scramble in enumerate(scrambles):
-				for test_scramble in range(30):
-					filename = os.path.join(cr_mr_path,"test_"+str(i)+"_"+str(test_scramble)+".csv")
-					ga = GA(pop_size=100, chromosone_length=1, crossover_rate=crossover_rate, mutation_rate=mutation_rate, iterations=300, scramble=scramble, filename=filename)
-					start_time = time.time()
-					best_solution, num_of_generation = ga.run()
-					completion_time = time.time() - start_time
-					utils.write_csv_file(filename, ["Completion time", "Solution", "Generations", "Scramble"])
-					utils.write_csv_file(filename, [str(completion_time), best_solution, str(num_of_generation), scramble])
+				with Pool(os.cpu_count()-1) as pool:
+					pool.map(run_multiprocessing, [[crossover_rate, mutation_rate, cr_mr_path, i, scramble, test_scramble] for test_scramble in range(30)])
+				#for test_scramble in range(30):
+				#	filename = os.path.join(cr_mr_path,"test_"+str(i)+"_"+str(test_scramble)+".csv")
+				#	ga = GA(pop_size=100, chromosone_length=1, crossover_rate=crossover_rate, mutation_rate=mutation_rate, iterations=300, scramble=scramble, filename=filename)
+				#	start_time = time.time()
+				#	best_solution, num_of_generation = ga.run()
+				#	completion_time = time.time() - start_time
+				#	utils.write_csv_file(filename, ["Completion time", "Solution", "Generations", "Scramble"])
+				#	utils.write_csv_file(filename, [str(completion_time), best_solution, str(num_of_generation), scramble])
