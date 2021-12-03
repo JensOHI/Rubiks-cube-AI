@@ -1,5 +1,7 @@
 import numpy as np
 from enum import Enum
+import glob
+import os
 
 # https://robertovaccari.com/blog/2020_07_07_genetic_rubik/
 rotations = ["X", "x", "Y", "y", "YY", "XX"]
@@ -92,3 +94,17 @@ def find_best_child(population, fitness):
 def write_csv_file(filename, data):
     with open(filename, 'a') as file:
         file.writelines(','.join(data)+"\n")
+
+def list_filenames_completed(folder):
+    for name in glob.glob(folder + '/*'):
+        with open(name, 'r') as file:
+            lines = file.readlines()
+        for line in lines[1:-1]:
+            if int(line[:2]) >= 54:
+                print(name)
+
+if __name__ == "__main__":
+    print(convert_moves_to_prime_convention('EByDYDYYybDSeEzZzmUX'))
+    print(convert_moves_to_prime_convention('zfUBuFUbuFRBLUlUbrfluLuzLuRUUlUrLuRUUlUrUFRBLUlUbrfluLuFubUfuBULuRUUlUrLuRUUlUrUzdrDRRuRBBLulBBURRZZxUBBDDRFFDDBBLUZZDLdLLUlBBrURBBuLLuBBDDlFFDDBBruUURUUrFFLflUUlUULfFRBLUlUbrfluLuxyUBBDDRFFDDBBLUZrUlUURuLrUlUURuLulUULrFFRXYFubUfuBUrUlUURuLrUlUURuLuFubUfuBUUUBUUbRRFrfUUfUUFrXrUURlBBLUBBDDRFFDDBBLUyXXFRBLUlUbrfluLuzuBBDDlFFDDBBruDLdLLUlBBrURBBuLLUBBDDRFFDDBBLUDLdLLUlBBrURBBuLL'))
+    #cr_mr_path = os.path.join("tests", "cr-"+str(0.5)+"_mr-"+str(0.5))
+    #list_filenames_completed(cr_mr_path)
