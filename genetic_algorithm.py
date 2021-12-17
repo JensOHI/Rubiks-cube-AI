@@ -63,7 +63,7 @@ class GA:
 			child_fitness = self.fitness()
 			max_fitness, best_child = utils.find_best_child(self.population, child_fitness)
 			if self.filename:
-				utils.write_csv_file(self.filename, [str(max_fitness), self.current_solution+best_child])
+				utils.write_csv_file(self.filename, [str(max_fitness), self.current_solution+ " + " +best_child])
 			tqdm.write("Max fitness " + str(max_fitness) + " - " + self.current_solution + " + " +  best_child)
 			
 			# Dynamic mutation rate, depending on fitness
@@ -193,7 +193,7 @@ if __name__ == "__main__":
 	if not os.path.exists(TEST_FOLDER):
 		os.mkdir(TEST_FOLDER)
 	crossover_rates = [0.5]
-	mutation_rates = [0.33]
+	mutation_rates = [0.5]
 	for crossover_rate in crossover_rates:
 		for mutation_rate in mutation_rates:
 			cr_mr_path =os.path.join(TEST_FOLDER, "cr-"+str(crossover_rate)+"_mr-"+str(mutation_rate))
@@ -202,7 +202,7 @@ if __name__ == "__main__":
 			for i, scramble in enumerate(scrambles):
 				for test_scramble in range(30):
 					filename = os.path.join(cr_mr_path,"test_"+str(i)+"_"+str(test_scramble)+".csv")
-					ga = GA(pop_size=100, chromosone_length=5, crossover_rate=crossover_rate, mutation_rate=mutation_rate, iterations=1200, scramble=scramble, filename=filename)
+					ga = GA(pop_size=100, chromosone_length=5, crossover_rate=crossover_rate, mutation_rate=mutation_rate, iterations=350, scramble=scramble, filename=filename)
 					start_time = time.time()
 					best_solution, num_of_generation = ga.run()
 					completion_time = time.time() - start_time
